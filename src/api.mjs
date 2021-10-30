@@ -77,8 +77,7 @@ function init (converter, defaultAttributes) {
             return converter.read(part.slice(equalIndex + 1), key)
           }
         } else {
-          const value = converter.read(part.slice(equalIndex + 1), key)
-          jar[key] = value
+          jar[key] = converter.read(part.slice(equalIndex + 1), key)
         }
       } catch (e) {
         //
