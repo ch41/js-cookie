@@ -52,25 +52,96 @@ function init (converter, defaultAttributes) {
       return
     }
 
-    // To prevent the for loop in the first place assign an empty array
-    // in case there are no cookies at all.
-    var cookies = document.cookie ? document.cookie.split('; ') : []
-    var jar = {}
-    for (var i = 0; i < cookies.length; i++) {
-      var parts = cookies[i].split('=')
-      var value = parts.slice(1).join('=')
+    // js-cookie 的实现有点浪费
+    let cookies = document.cookie
+    const jar = {}
+    while (cookies.length > 0) {
+      let part
+      const splitIndex = cookies.indexOf('; ')
+
+      if (splitIndex > -1) {
+        part = cookies.slice(0, splitIndex)
+        cookies = cookies.slice(splitIndex + 2)
+      } else {
+        part = cookies
+        cookies = ''
+      }
+
+      const equalIndex = part.indexOf('=')
 
       try {
-        var found = decodeURIComponent(parts[0])
-        jar[found] = converter.read(value, found)
+        const key = decodeURIComponent(part.slice(0, equalIndex))
 
-        if (name === found) {
-          break
+        if (name) {
+          if (name === key) {
+            return converter.read(part.slice(equalIndex + 1), key)
+          }
+        } else {
+          const value = converter.read(part.slice(equalIndex + 1), key)
+          jar[key] = value
         }
-      } catch (e) {}
+      } catch (e) {
+        //
+      }
     }
 
-    return name ? jar[name] : jar
+    return name ? undefined : jar
+
+    // let pos = 0
+    // const jar = {}
+    // while (pos < cookies.length) {
+    //   let start = pos
+    //   while (cookies[pos] !== '=') pos++
+    //   try {
+    //     let key = ''
+    //     try {
+    //       key = decodeURIComponent(cookies.slice(start, pos))
+    //     } catch (e) {
+    //       // parse 继续
+    //     }
+
+    //     // eat '='
+    //     pos++
+    //     start = pos
+    //     while (cookies[pos] !== ';' && pos < cookies.length) pos++
+    //     const value = cookies.slice(start, pos)
+
+    //     if (name && name === key) return converter.read(value, key)
+
+    //     // eat "; "
+    //     if (pos < cookies.length) pos += 2
+    //     if (key) jar[key] = converter.read(value, key)
+    //   } catch (e) {
+    //     //
+    //   }
+    // }
+    // return name ? undefined : jar
+
+    // To prevent the for loop in the first place assign an empty array
+    // in case there are no cookies at all.
+    // const cookies = document.cookie
+    // let pos = 0
+    // while (pos < cookies.length) {
+    //   let start = pos
+    //   while (cookies[pos] !== '=') pos++
+    //   try {
+    //     const key = decodeURIComponent(cookies.slice(start, pos))
+    //     if (key === name) {
+    //       // eat '='
+    //       pos++
+    //       start = pos
+    //       while (cookies[pos] !== ';' && pos < cookies.length) pos++
+    //       const value = cookies.slice(start, pos)
+    //       return converter.read(value, key)
+    //     } else {
+    //       while (cookies[pos] !== ';' && cookies[pos + 1] !== ' ' && pos < cookies.length) pos++
+    //       // eat "; "
+    //       if (pos < cookies.length) pos += 2
+    //     }
+    //   } catch (e) {}
+    // }
+
+    // return undefined
   }
 
   return Object.create(
